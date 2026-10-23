@@ -38,20 +38,32 @@ def claude_settings_path() -> Path:
 # ---- comandos que o Windows / Claude Code vão executar --------------------
 
 
+# No executável há dois programas lado a lado:
+#   clak820.exe      app da bandeja (sem janela) — o que o usuário abre
+#   clak820-cli.exe  linha de comando — usada pelo statusLine do Claude Code
+GUI_EXE = "clak820.exe"
+CLI_EXE = "clak820-cli.exe"
+
+
 def statusline_command() -> str:
     if frozen():
-        return f'"{Path(sys.executable).as_posix()}" statusline'
+        return f'"{Path(sys.executable).with_name(CLI_EXE).as_posix()}" statusline'
     return "python -m clak820 statusline"
 
 
 def daemon_argv() -> list[str]:
+    """Comando que inicia o app da bandeja (autostart e `start`)."""
     if frozen():
-        return [str(Path(sys.executable).with_name("clak820-daemon.exe"))]
+        return [str(Path(sys.executable).with_name(GUI_EXE))]
     pythonw = Path(sys.executable).with_name("pythonw.exe")
-    return [str(pythonw if pythonw.exists() else sys.executable), "-m", "clak820", "run"]
+    return [str(pythonw if pythonw.exists() else sys.executable), "-m", "clak820", "tray"]
 
 
 # ---- settings.json ------------------------------------------------------
+
+
+class ForeignStatusLine(RuntimeError):
+    """Já existe um statusLine que não é do clak820."""
 
 
 def apply_statusline(settings: dict, command: str | None, force: bool = False) -> dict:
@@ -64,12 +76,16 @@ def apply_statusline(settings: dict, command: str | None, force: bool = False) -
             out.pop("statusLine")
         return out
     if current and not ours and not force:
-        raise RuntimeError(
+        raise ForeignStatusLine(
             "Você já tem outro statusLine configurado no Claude Code. "
             "Use --force para substituir (um backup é salvo)."
         )
     out["statusLine"] = {"type": "command", "command": command}
     return out
+
+
+def configure_statusline(force: bool = False) -> Path:
+    return _edit_settings(statusline_command(), force)
 
 
 def _edit_settings(command: str | None, force: bool = False) -> Path:
@@ -78,7 +94,7 @@ def _edit_settings(command: str | None, force: bool = False) -> Path:
     new = apply_statusline(settings, command, force)
     if new != settings:
         if path.exists():
-            shutil.copy2(path, path.with_name("settings.json.bak-ak820"))
+            shutil.copy2(path, path.with_name("settings.json.bak-clak820"))
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(new, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return path
@@ -161,15 +177,15 @@ def stop_daemon() -> bool:
 
 
 def install(force: bool = False, autostart: bool = True) -> None:
-    path = _edit_settings(statusline_command(), force)
+    path = configure_statusline(force)
     print(f"✓ statusLine configurado em {path}")
     if autostart:
         set_autostart(True)
         print("✓ inicia junto com o Windows")
     if start_daemon():
-        print("✓ daemon iniciado em segundo plano")
+        print("✓ clak820 iniciado (ícone na bandeja)")
     else:
-        print("• daemon já estava rodando")
+        print("• clak820 já estava rodando")
     print("Pronto! Use o Claude Code normalmente; a tela atualiza sozinha (teclado no cabo).")
 
 
@@ -177,6 +193,8 @@ def uninstall() -> None:
     stop_daemon()
     set_autostart(False)
     _edit_settings(None)
+    # Uma reinstalação deve refazer a configuração inicial (autostart etc.).
+    (data_dir() / "setup.done").unlink(missing_ok=True)
     print("✓ daemon parado, inicialização automática e statusLine removidos")
     print(f"Seus dados continuam em {data_dir()} (pode apagar se quiser).")
 

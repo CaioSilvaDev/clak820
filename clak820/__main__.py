@@ -89,6 +89,12 @@ def cmd_run(a) -> int:
     return main(a.verbose)
 
 
+def cmd_tray(_a) -> int:
+    from .tray import main
+
+    return main()
+
+
 def cmd_install(a) -> int:
     from .installer import install
 
@@ -106,14 +112,14 @@ def cmd_uninstall(_a) -> int:
 def cmd_start(_a) -> int:
     from .installer import start_daemon
 
-    print("Daemon iniciado." if start_daemon() else "O daemon já está rodando.")
+    print("clak820 iniciado." if start_daemon() else "O clak820 já está rodando.")
     return 0
 
 
 def cmd_stop(_a) -> int:
     from .installer import stop_daemon
 
-    print("Daemon parado." if stop_daemon() else "O daemon não estava rodando.")
+    print("clak820 parado." if stop_daemon() else "O clak820 não estava rodando.")
     return 0
 
 
@@ -133,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
     from . import __version__
 
     ap = argparse.ArgumentParser(
-        prog="clak820",
+        prog="clak820-cli",
         description="Consumo do Claude Code na tela do AJAZZ AK820 Pro.",
     )
     ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -146,8 +152,11 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status", help="mostra o estado do daemon e do teclado").set_defaults(
         fn=cmd_status
     )
-    sub.add_parser("start", help="liga o daemon em segundo plano").set_defaults(fn=cmd_start)
-    sub.add_parser("stop", help="para o daemon").set_defaults(fn=cmd_stop)
+    sub.add_parser("start", help="abre o app da bandeja em segundo plano").set_defaults(
+        fn=cmd_start
+    )
+    sub.add_parser("stop", help="fecha o app da bandeja / daemon").set_defaults(fn=cmd_stop)
+    sub.add_parser("tray", help="roda o app da bandeja").set_defaults(fn=cmd_tray)
     sub.add_parser("probe", help="lista as interfaces HID do teclado (só leitura)").set_defaults(
         fn=cmd_probe
     )

@@ -1,7 +1,7 @@
 name: Release
 
 # Ao criar uma tag v* (ex.: git tag v0.1.0 && git push --tags), gera o .zip
-# com os executáveis e publica na aba Releases.
+# e o instalador e publica na aba Releases.
 on:
   push:
     tags: ["v*"]
@@ -17,10 +17,18 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
       - name: Build
         shell: pwsh
         run: ./build.ps1
       - uses: softprops/action-gh-release@v3
         with:
-          files: dist/*.zip
+          files: |
+            dist/*-setup.exe
+            dist/*.zip
           generate_release_notes: true

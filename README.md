@@ -27,33 +27,54 @@ Sem atividade no Claude Code por 20 minutos, a tela volta ao **relógio nativo**
 
 ## Instalação
 
-1. Baixe o `.zip` mais recente em [**Releases**](../../releases) e extraia numa pasta fixa,
-   por exemplo `C:\Programas\clak820`.
+1. Baixe o **`clak820-<versão>-setup.exe`** em [**Releases**](../../releases) e dê dois cliques.
 2. Conecte o teclado **pelo cabo USB, no modo com fio**, e feche o app oficial da AJAZZ.
-3. Num terminal dentro da pasta:
+3. No fim da instalação, deixe marcado **Executar clak820**.
 
-   ```powershell
-   .\clak820.exe install
-   ```
+Pronto. O ícone do clak820 aparece na bandeja, perto do relógio do Windows. Na primeira vez ele:
 
-Pronto. O `install`:
+- configura o `statusLine` do Claude Code em `~/.claude/settings.json`, com backup em `settings.json.bak-clak820`;
+- passa a iniciar junto com o Windows.
 
-- configura o `statusLine` do Claude Code em `~/.claude/settings.json`, com backup em `settings.json.bak-ak820`;
-- faz o `clak820-daemon.exe` iniciar junto com o Windows, sem janela e sem precisar de admin;
-- liga o daemon na hora.
+Não precisa de terminal nem de administrador. Para remover, use **Configurações → Aplicativos → clak820 → Desinstalar**, que também desfaz o statusLine e a inicialização automática.
 
-Para desfazer tudo: `.\clak820.exe uninstall`.
+> O Windows SmartScreen pode avisar na primeira execução, porque o instalador não é assinado.
+> Clique em **Mais informações → Executar assim mesmo**.
 
-> O Windows SmartScreen pode avisar na primeira execução, porque o executável não é assinado.
-> Clique em **Mais informações → Executar assim mesmo**, ou rode pelo código-fonte (veja abaixo).
+<details>
+<summary>Versão portátil (.zip, sem instalador)</summary>
 
-## Comandos
+Extraia o `clak820-<versão>-windows-x64.zip` numa pasta fixa e abra o `clak820.exe`.
+A configuração é a mesma. Para remover, rode `clak820-cli.exe uninstall` e apague a pasta.
+</details>
+
+## Bandeja
+
+O ícone mostra o anel do % de 5h com a mesma cor da tela. Clique com o botão direito para ver:
+
+```
+5h: 25%  ·  reset 19:50
+Hoje: 7.33M tokens
+Teclado: cabo ✓
+─────────────────────────
+Atualizar tela agora
+Pausar (mostrar relógio)
+✓ Iniciar com o Windows
+Abrir pasta de logs
+Sobre o clak820
+─────────────────────────
+Sair
+```
+
+## Linha de comando
+
+O `clak820-cli.exe` tem os mesmos recursos para quem prefere o terminal:
 
 | Comando | O que faz |
 |---|---|
 | `install` / `uninstall` | Configura ou remove tudo |
-| `status` | Mostra o daemon, o statusLine, a inicialização automática e o modo do teclado |
-| `start` / `stop` | Liga ou para o daemon em segundo plano |
+| `status` | Mostra o app, o statusLine, a inicialização automática e o modo do teclado |
+| `start` / `stop` | Abre ou fecha o app da bandeja |
 | `clock` | Acerta a hora e volta a tela ao relógio nativo |
 | `upload [imagem]` | Envia qualquer imagem para a tela (ou o painel, sem argumento) |
 | `render --demo --scale 3 --out p.png` | Gera o painel como PNG, sem enviar |
@@ -63,10 +84,10 @@ Para desfazer tudo: `.\clak820.exe uninstall`.
 ## Como funciona
 
 ```
-Claude Code ──statusLine (JSON)──▶ clak820 statusline ──▶ state.json ─┐
-~/.claude/projects/**/*.jsonl ─────────────────────────────────────────────┤
-                                                                           ▼
-                         clak820-daemon ── desenha 128×128 ──▶ USB HID ──▶ tela
+Claude Code ──statusLine (JSON)──▶ clak820-cli statusline ──▶ state.json ─┐
+~/.claude/projects/**/*.jsonl ───────────────────────────────────────────────┤
+                                                                             ▼
+                  clak820.exe (bandeja) ── desenha 128×128 ──▶ USB HID ──▶ tela
 ```
 
 - Os limites vêm do campo oficial `rate_limits` que o Claude Code entrega ao
@@ -114,17 +135,18 @@ Engenharia reversa feita pela comunidade:
 ```powershell
 pip install -e ".[dev]"
 python -m pytest
-python -m clak820 install     # usa o Python em vez do .exe
+python -m clak820 tray        # abre o app da bandeja pelo Python
 ```
 
-Gerar os executáveis e o `.zip` em `dist\`:
+Gerar os executáveis, o `.zip` e o instalador em `dist\` (precisa do
+[Inno Setup 6](https://jrsoftware.org/isinfo.php): `winget install JRSoftware.InnoSetup`):
 
 ```powershell
 .\build.ps1
 ```
 
 Para publicar uma versão, crie uma tag `v*`, como `git tag v0.1.0` seguido de `git push --tags`.
-O GitHub Actions gera o `.zip` e publica em Releases.
+O GitHub Actions gera o instalador e o `.zip` e publica os dois em Releases.
 
 ## Licença
 

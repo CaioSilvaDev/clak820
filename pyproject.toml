@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clak820"
-version = "0.1.0"
+version = "0.2.0"
 description = "Mostra o consumo do Claude Code na tela do teclado AJAZZ AK820 Pro"
 requires-python = ">=3.10"
-dependencies = ["hidapi>=0.14", "pillow>=10"]
+dependencies = ["hidapi>=0.14", "pillow>=10", "pystray>=0.19"]
 
 readme = "README.md"
 license = "MIT"
@@ -21,7 +21,7 @@ build = ["pytest", "pyinstaller>=6"]
 clak820 = "clak820.__main__:main"
 
 [project.gui-scripts]
-clak820-daemon = "clak820.daemon:main"
+clak820-tray = "clak820.tray:main"
 
 [tool.setuptools]
 packages = ["clak820"]
